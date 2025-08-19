@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packing List Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(30deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(30deg); }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .trip-selector {
+            margin-bottom: 40px;
+        }
+
+        .trip-selector h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .trip-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .trip-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .trip-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .trip-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .trip-card:hover::before {
+            opacity: 0.1;
+        }
+
+        .trip-card.selected {
+            border-color: #4facfe;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .trip-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .trip-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .trip-card p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            position: relative;
+            z-index: 1;
+        }
+
+        .custom-trip {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .custom-trip h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .custom-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .generate-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .generate-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        .generate-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .packing-list {
+            margin-top: 40px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .packing-list.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .packing-list h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .list-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .category {
+            margin-bottom: 30px;
+        }
+
+        .category h3 {
+            color: #4facfe;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .item input[type="checkbox"] {
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .item label {
+            cursor: pointer;
+            flex-grow: 1;
+            transition: all 0.3s ease;
+        }
+
+        .item.checked label {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .print-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .print-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .clear-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .download-btn {
+            background: #6f42c1;
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #5a2d91;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .custom-inputs {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .trip-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+            
+            .container {
+                box-shadow: none;
+                background: white;
+            }
+            
+            .header {
+                background: none;
+                color: black;
+            }
+            
+            .trip-selector, .actions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎒 Packing List Generator</h1>
+            <p>Never forget anything again! Generate custom packing lists for any adventure.</p>
+        </div>
+
+        <div class="main-content">
+            <div class="trip-selector">
+                <h2>Choose Your Adventure</h2>
+                <div class="trip-grid">
+                    <div class="trip-card" data-trip="beach">
+                        <div class="icon">🏖️</div>
+                        <h3>Beach Trip</h3>
+                        <p>Sun, sand & surf</p>
+                    </div>
+                    <div class="trip-card" data-trip="ski">
+                        <div class="icon">⛷️</div>
+                        <h3>Ski Trip</h3>
+                        <p>Slopes & snow</p>
+                    </div>
+                    <div class="trip-card" data-trip="hiking">
+                        <div class="icon">🥾</div>
+                        <h3>Hiking Trip</h3>
+                        <p>Trails & nature</p>
+                    </div>
+                    <div class="trip-card" data-trip="hunting">
+                        <div class="icon">🦌</div>
+                        <h3>Hunting Trip</h3>
+                        <p>Wilderness & wildlife</p>
+                    </div>
+                    <div class="trip-card" data-trip="camping">
+                        <div class="icon">⛺</div>
+                        <h3>Camping Trip</h3>
+                        <p>Outdoors & campfire</p>
+                    </div>
+                    <div class="trip-card" data-trip="business">
+                        <div class="icon">💼</div>
+                        <h3>Business Trip</h3>
+                        <p>Professional & polished</p>
+                    </div>
+                    <div class="trip-card" data-trip="city">
+                        <div class="icon">🏙️</div>
+                        <h3>City Break</h3>
+                        <p>Urban exploration</p>
+                    </div>
+                    <div class="trip-card" data-trip="festival">
+                        <div class="icon">🎵</div>
+                        <h3>Festival</h3>
+                        <p>Music & fun</p>
+                    </div>
+                </div>
+
+                <div class="custom-trip">
+                    <h3>Or customize your trip:</h3>
+                    <div class="custom-inputs">
+                        <div class="input-group">
+                            <label for="destination">Destination</label>
+                            <input type="text" id="destination" placeholder="Where are you going?">
+                        </div>
+                        <div class="input-group">
+                            <label for="duration">Duration</label>
+                            <select id="duration">
+                                <option value="1-2">1-2 days</option>
+                                <option value="3-5" selected>3-5 days</option>
+                                <option value="6-10">6-10 days</option>
+                                <option value="11+">11+ days</option>
+                            </select>
+                        </div>
+                        <button class="generate-btn" id="generateBtn">
+                            <span>Generate List</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="packing-list" id="packingList">
+                <h2 id="listTitle"></h2>
+                <div class="list-container" id="listContainer">
+                    <!-- Generated list will appear here -->
+                </div>
+                <div class="actions">
+                    <button class="action-btn print-btn" onclick="printList()">🖨️ Print List</button>
+                    <button class="action-btn download-btn" onclick="downloadList()">📥 Download PDF</button>
+                    <button class="action-btn clear-btn" onclick="clearList()">🗑️ Clear List</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Packing list templates
+        const packingLists = {
+            beach: {
+                title: "Beach Trip Packing List",
+                icon: "🏖️",
+                categories: {
+                    "👙 Swimwear & Beach": [
+                        "Swimsuit/trunks (2-3)",
+                        "Beach towels (2)",
+                        "Flip-flops/sandals",
+                        "Beach bag",
+                        "Waterproof phone case",
+                        "Beach umbrella/tent",
+                        "Beach chairs",
+                        "Cooler with ice packs"
+                    ],
+                    "☀️ Sun Protection": [
+                        "Sunscreen SPF 30+",
+                        "Sunglasses",
+                        "Wide-brimmed hat",
+                        "Lip balm with SPF",
+                        "After-sun lotion",
+                        "Light cover-up",
+                        "UV protection shirt"
+                    ],
+                    "👕 Clothing": [
+                        "Casual summer clothes",
+                        "Light pajamas",
+                        "Underwear",
+                        "Light jacket/sweater",
+                        "Dinner outfit",
+                        "Comfortable walking shoes"
+                    ],
+                    "🧴 Personal Care": [
+                        "Toothbrush & toothpaste",
+                        "Shampoo & conditioner",
+                        "Body wash",
+                        "Deodorant",
+                        "Moisturizer",
+                        "Personal medications",
+                        "Hair ties/clips"
+                    ]
+                }
+            },
+            ski: {
+                title: "Ski Trip Packing List",
+                icon: "⛷️",
+                categories: {
+                    "🎿 Ski Equipment": [
+                        "Skis & boots (or rental)",
+                        "Ski poles",
+                        "Helmet",
+                        "Goggles",
+                        "Ski gloves/mittens",
+                        "Hand/foot warmers",
+                        "Ski lock",
+                        "Equipment bag"
+                    ],
+                    "🧥 Winter Clothing": [
+                        "Ski jacket",
+                        "Ski pants",
+                        "Thermal base layers (top & bottom)",
+                        "Merino wool socks",
+                        "Warm hat/beanie",
+                        "Neck gaiter/balaclava",
+                        "Insulated vest",
+                        "Warm pajamas"
+                    ],
+                    "👔 Après-Ski Wear": [
+                        "Casual warm clothes",
+                        "Nice dinner outfit",
+                        "Warm boots",
+                        "Comfortable sweaters",
+                        "Jeans/warm pants",
+                        "Underwear",
+                        "Warm socks"
+                    ],
+                    "🏥 Safety & Care": [
+                        "First aid kit",
+                        "Lip balm",
+                        "Sunscreen (snow reflects UV)",
+                        "Moisturizer",
+                        "Pain relievers",
+                        "Personal medications",
+                        "Tissues"
+                    ]
+                }
+            },
+            hiking: {
+                title: "Hiking Trip Packing List",
+                icon: "🥾",
+                categories: {
+                    "🎒 Hiking Gear": [
+                        "Hiking backpack",
+                        "Hiking boots",
+                        "Trekking poles",
+                        "Water bottles/hydration pack",
+                        "Headlamp/flashlight",
+                        "Multi-tool/knife",
+                        "Whistle",
+                        "Rope/paracord"
+                    ],
+                    "🧥 Outdoor Clothing": [
+                        "Moisture-wicking shirts",
+                        "Hiking pants/shorts",
+                        "Rain jacket",
+                        "Insulating layer",
+                        "Hiking socks",
+                        "Hiking underwear",
+                        "Sun hat",
+                        "Warm beanie"
+                    ],
+                    "🏕️ Camping (if overnight)": [
+                        "Tent",
+                        "Sleeping bag",
+                        "Sleeping pad",
+                        "Camp stove & fuel",
+                        "Cookware",
+                        "Food & snacks",
+                        "Water purification tablets",
+                        "Trash bags"
+                    ],
+                    "🩹 Safety & Navigation": [
+                        "First aid kit",
+                        "Map & compass/GPS",
+                        "Sunscreen",
+                        "Insect repellent",
+                        "Emergency shelter",
+                        "Personal medications",
+                        "Emergency contact info"
+                    ]
+                }
+            },
+            hunting: {
+                title: "Hunting Trip Packing List",
+                icon: "🦌",
+                categories: {
+                    "🔫 Hunting Equipment": [
+                        "Hunting rifle/bow",
+                        "Ammunition/arrows",
+                        "Hunting knife",
+                        "Field dressing kit",
+                        "Game bags",
+                        "Hunting license",
+                        "Tags",
+                        "Binoculars"
+                    ],
+                    "🎯 Hunting Gear": [
+                        "Tree stand/blind",
+                        "Safety harness",
+                        "Scent eliminator",
+                        "Calls/decoys",
+                        "Range finder",
+                        "Headlamp (red light)",
+                        "Hand/foot warmers",
+                        "Game cart/sled"
+                    ],
+                    "👔 Hunting Clothing": [
+                        "Camouflage clothing",
+                        "Hunter orange vest/hat",
+                        "Insulated boots",
+                        "Hunting gloves",
+                        "Base layers",
+                        "Rain gear",
+                        "Warm hat",
+                        "Gaiters"
+                    ],
+                    "🏕️ Camp Essentials": [
+                        "Cooler with ice",
+                        "Food & water",
+                        "Camp stove",
+                        "First aid kit",
+                        "Personal medications",
+                        "Weather radio",
+                        "Emergency supplies"
+                    ]
+                }
+            },
+            camping: {
+                title: "Camping Trip Packing List",
+                icon: "⛺",
+                categories: {
+                    "⛺ Shelter & Sleep": [
+                        "Tent",
+                        "Sleeping bags",
+                        "Sleeping pads/air mattress",
+                        "Pillows/inflatable pillows",
+                        "Tarp/footprint",
+                        "Rope/guy lines",
+                        "Tent stakes (extra)"
+                    ],
+                    "🍳 Cooking & Food": [
+                        "Camp stove & fuel",
+                        "Cookware & utensils",
+                        "Plates & bowls",
+                        "Cups & mugs",
+                        "Cooler with ice",
+                        "Food & snacks",
+                        "Water containers",
+                        "Can opener/bottle opener"
+                    ],
+                    "🔦 Tools & Utilities": [
+                        "Headlamps/flashlights",
+                        "Lantern",
+                        "Multi-tool",
+                        "Rope/paracord",
+                        "Duct tape",
+                        "Trash bags",
+                        "Paper towels",
+                        "Wet wipes"
+                    ],
+                    "👕 Clothing & Personal": [
+                        "Weather-appropriate clothes",
+                        "Extra socks & underwear",
+                        "Rain gear",
+                        "Warm layers",
+                        "Personal hygiene items",
+                        "Sunscreen",
+                        "Insect repellent",
+                        "First aid kit"
+                    ]
+                }
+            },
+            business: {
+                title: "Business Trip Packing List",
+                icon: "💼",
+                categories: {
+                    "💼 Work Essentials": [
+                        "Laptop & charger",
+                        "Business cards",
+                        "Important documents",
+                        "Presentation materials",
+                        "Notebook & pens",
+                        "Phone charger",
+                        "Portable battery",
+                        "USB drives"
+                    ],
+                    "👔 Professional Attire": [
+                        "Business suits",
+                        "Dress shirts",
+                        "Ties",
+                        "Dress shoes",
+                        "Belt",
+                        "Professional accessories",
+                        "Dress socks",
+                        "Undergarments"
+                    ],
+                    "👕 Casual Wear": [
+                        "Casual pants",
+                        "Polo shirts/casual shirts",
+                        "Casual shoes",
+                        "Jacket/blazer",
+                        "Comfortable clothes for downtime",
+                        "Exercise clothes (if gym available)",
+                        "Pajamas"
+                    ],
+                    "🧳 Travel Essentials": [
+                        "Travel documents",
+                        "Wallet & credit cards",
+                        "Personal medications",
+                        "Toiletries",
+                        "Travel-sized laundry detergent",
+                        "Umbrella",
+                        "Travel adapter",
+                        "Entertainment for flight"
+                    ]
+                }
+            },
+            city: {
+                title: "City Break Packing List",
+                icon: "🏙️",
+                categories: {
+                    "👟 Urban Exploration": [
+                        "Comfortable walking shoes",
+                        "Casual clothes",
+                        "Light jacket",
+                        "Crossbody bag/daypack",
+                        "Portable phone charger",
+                        "City map/guide",
+                        "Camera",
+                        "Water bottle"
+                    ],
+                    "🍽️ Dining & Entertainment": [
+                        "Nice dinner outfit",
+                        "Dress shoes",
+                        "Accessories",
+                        "Theater/event tickets",
+                        "Credit cards & cash",
+                        "Restaurant reservations",
+                        "Entertainment apps downloaded"
+                    ],
+                    "🏨 Hotel Comfort": [
+                        "Casual loungewear",
+                        "Slippers",
+                        "Book/e-reader",
+                        "Travel pillow",
+                        "Eye mask",
+                        "Earplugs",
+                        "Personal toiletries"
+                    ],
+                    "📱 Tech & Travel": [
+                        "Smartphone & charger",
+                        "Headphones",
+                        "Travel adapter",
+                        "Portable battery",
+                        "Travel documents",
+                        "Travel insurance info",
+                        "Emergency contacts"
+                    ]
+                }
+            },
+            festival: {
+                title: "Festival Packing List",
+                icon: "🎵",
+                categories: {
+                    "🎪 Festival Essentials": [
+                        "Festival tickets",
+                        "Wristbands/credentials",
+                        "Cash & cards",
+                        "Portable phone charger",
+                        "Earplugs",
+                        "Bandana/face covering",
+                        "Wet wipes",
+                        "Hand sanitizer"
+                    ],
+                    "👕 Festival Fashion": [
+                        "Comfortable shoes",
+                        "Weather-appropriate clothes",
+                        "Fun/colorful outfits",
+                        "Rain poncho",
+                        "Hat/cap",
+                        "Sunglasses",
+                        "Light layers",
+                        "Accessories"
+                    ],
+                    "🏕️ Camping (if applicable)": [
+                        "Tent",
+                        "Sleeping bag",
+                        "Camping chair",
+                        "Cooler",
+                        "Food & snacks",
+                        "Camping stove",
+                        "Flashlight/headlamp",
+                        "Toiletries"
+                    ],
+                    "☀️ Comfort & Safety": [
+                        "Sunscreen",
+                        "Water bottle",
+                        "First aid supplies",
+                        "Personal medications",
+                        "Tissues",
+                        "Plastic bags",
+                        "Towel",
+                        "Emergency contact info"
+                    ]
+                }
+            }
+        };
+
+        let selectedTrip = null;
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Trip card selection
+            document.querySelectorAll('.trip-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('.trip-card').forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedTrip = this.dataset.trip;
+                    
+                    // Clear custom inputs
+                    document.getElementById('destination').value = '';
+                    
+                    generatePackingList();
+                });
+            });
+
+            // Generate button
+            document.getElementById('generateBtn').addEventListener('click', function() {
+                const destination = document.getElementById('destination').value.trim();
+                const duration = document.getElementById('duration').value;
+                
+                if (destination) {
+                    generateCustomList(destination, duration);
+                } else if (selectedTrip) {
+                    generatePackingList();
+                } else {
+                    alert('Please select a trip type or enter a destination!');
+                }
+            });
+        });
+
+        function generatePackingList() {
+            if (!selectedTrip) return;
+            
+            const listData = packingLists[selectedTrip];
+            displayPackingList(listData);
+        }
+
+        function generateCustomList(destination, duration) {
+            // Simple custom list generation based on destination keywords
+            let customList = {
+                title: `${destination} Trip Packing List`,
+                icon: "✈️",
+                categories: {}
+            };
+
+            const dest = destination.toLowerCase();
+            
+            // Base essentials for any trip
+            customList.categories["🧳 Travel Essentials"] = [
+                "Travel documents & ID",
+                "Phone & charger",
+                "Cash & credit cards",
+                "Personal medications",
+                "Toiletries",
+                "Comfortable clothes",
+                "Underwear & socks",
+                "Pajamas"
+            ];
+
+            // Add duration-specific items
+            if (duration === "1-2") {
+                customList.categories["🎒 Short Trip Extras"] = [
+                    "Light backpack",
+                    "Travel-size toiletries",
+                    "One extra outfit",
+                    "Snacks for travel"
+                ];
+            } else if (duration === "11+") {
+                customList.categories["🧳 Extended Trip Extras"] = [
+                    "Laundry supplies",
+                    "Extra shoes",
+                    "More clothing variety",
+                    "Entertainment items",
+                    "Travel pillow",
+                    "Portable laundry line"
+                ];
+            }
+
+            // Add destination-specific items
+            if (dest.includes('beach') || dest.includes('hawaii') || dest.includes('tropical')) {
+                customList.categories["🏖️ Beach Essentials"] = [
+                    "Swimwear",
+                    "Sunscreen SPF 30+",
+                    "Beach towel",
+                    "Sunglasses",
+                    "Flip-flops",
+                    "Hat"
+                ];
+            } else if (dest.includes('mountain') || dest.includes('cold') || dest.includes('winter')) {
+                customList.categories["❄️ Cold Weather Gear"] = [
+                    "Warm jacket",
+                    "Thermal underwear",
+                    "Warm boots",
+                    "Gloves",
+                    "Warm hat",
+                    "Scarf"
+                ];
+            } else if (dest.includes('city') || dest.includes('urban') || dest.includes('new york') || dest.includes('london')) {
+                customList.categories["🏙️ City Essentials"] = [
+                    "Comfortable walking shoes",
+                    "City map/guide",
+                    "Crossbody bag",
+                    "Nice dinner outfit",
+                    "Portable charger"
+                ];
+            }
+
+            displayPackingList(customList);
+        }
+
+        function displayPackingList(listData) {
+            const packingListDiv = document.getElementById('packingList');
+            const listTitle = document.getElementById('listTitle');
+            const listContainer = document.getElementById('listContainer');
+
+            // Show loading state
+            const generateBtn = document.getElementById('generateBtn');
+            generateBtn.classList.add('loading');
+            generateBtn.innerHTML = '<span>Generating...</span>';
+
+            setTimeout(() => {
+                listTitle.innerHTML = `${listData.icon} ${listData.title}`;
+                
+                let html = '';
+                for (const [categoryName, items] of Object.entries(listData.categories)) {
+                    html += `
+                        <div class="category">
+                            <h3>${categoryName}</h3>
+                            <div class="category-items">
+                    `;
+                    
+                    items.forEach((item, index) => {
+                        const itemId = `item_${categoryName.replace(/[^a-zA-Z0-9]/g, '')}_${index}`;
+                        html += `
+                            <div class="item">
+                                <input type="checkbox" id="${itemId}" onchange="toggleItem(this)">
+                                <label for="${itemId}">${item}</label>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+
+                listContainer.innerHTML = html;
+                packingListDiv.classList.add('show');
+
+                // Reset button
+                generateBtn.classList.remove('loading');
+                generateBtn.innerHTML = '<span>Generate List</span>';
+
+                // Scroll to list
+                packingListDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 1000);
+        }
+
+        function toggleItem(checkbox) {
+            const item = checkbox.closest('.item');
+            if (checkbox.checked) {
+                item.classList.add('checked');
+            } else {
+                item.classList.remove('checked');
+            }
+        }
+
+        function printList() {
+            window.print();
+        }
+
+        function downloadList() {
+            const listTitle = document.getElementById('listTitle').textContent;
+            const categories = document.querySelectorAll('.category');
+            
+            let content = `${listTitle}\n${'='.repeat(listTitle.length)}\n\n`;
+            
+            categories.forEach(category => {
+                const categoryTitle = category.querySelector('h3').textContent;
+                content += `${categoryTitle}\n${'-'.repeat(categoryTitle.length)}\n`;
+                
+                const items = category.querySelectorAll('.item label');
+                items.forEach(item => {
+                    const checkbox = item.previousElementSibling;
+                    const checkmark = checkbox.checked ? '✓' : '☐';
+                    content += `${checkmark} ${item.textContent}\n`;
+                });
+                content += '\n';
+            });
+            
+            // Create and download file
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${listTitle.replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function clearList() {
+            const checkboxes = document.querySelectorAll('.item input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                checkbox.closest('.item').classList.remove('checked');
+            });
+        }
+
+        // Add some interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Stagger animation for trip cards
+            const cards = document.querySelectorAll('.trip-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>
